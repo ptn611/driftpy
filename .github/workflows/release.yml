@@ -7,17 +7,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2.5.0
+      uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791 # v2.5.0
 
     - name: Set up Python
-      uses: actions/setup-python@v4.3.0
+      uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984 # v4.3.0
       with:
         python-version: '3.10.10' 
     #----------------------------------------------
     #  -----  install & configure poetry  -----
     #----------------------------------------------
     - name: Install and configure Poetry
-      uses: snok/install-poetry@v1.3.3
+      uses: snok/install-poetry@d45b6d76012debf457ab49dffc7fb7b2efe8071d # v1.3.3
       with:
         version: 1.4.2
         virtualenvs-create: true

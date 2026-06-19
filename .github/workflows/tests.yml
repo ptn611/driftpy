@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo.
-        uses: actions/checkout@v2
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
         with:
           submodules: 'recursive'
 
       - name: Cache Solana Tool Suite
-        uses: actions/cache@v2
+        uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
         id: cache-solana
         with:
           path: |
@@ -28,7 +28,7 @@ jobs:
           key: solana-${{ runner.os }}-v0000-${{ env.solana_verion }}
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1
         with:
           profile: minimal
           toolchain: nightly
@@ -41,7 +41,7 @@ jobs:
       - name: Add Solana to path
         run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2
         with:
           node-version: '17'
 
@@ -52,7 +52,7 @@ jobs:
         run: yes | solana-keygen new
 
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@0f07f7f756721ebd886c2462646a35f78a8bc4de # v1
         with:
           python-version: 3.9
 
@@ -60,7 +60,7 @@ jobs:
       #  -----  install & configure poetry  -----
       #----------------------------------------------
       - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1
         with:
           version: 1.1.10
           virtualenvs-create: true
@@ -71,7 +71,7 @@ jobs:
       #----------------------------------------------
       - name: Load cached venv
         id: cached-poetry-dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
