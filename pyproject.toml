@@ -10,8 +10,8 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/drift-labs/driftpy"
-documentation = "https://drift-labs.github.io/driftpy/"
+homepage = "https://github.com/velocity-exchange/driftpy"
+documentation = "https://velocity-exchange.github.io/driftpy/"
 
 [tool.poetry.dependencies]
 python = "^3.10"
