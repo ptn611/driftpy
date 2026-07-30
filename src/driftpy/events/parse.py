@@ -5,7 +5,7 @@ import base64
 from typing import Tuple, Optional
 from anchorpy import Program, Event
 
-DRIFT_PROGRAM_ID: str = "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH"
+DRIFT_PROGRAM_ID: str = "CRFEX81cWA7JkUe5E5YrurfAszRdWxvaYCyAzG39s3Fw"
 DRIFT_PROGRAM_START: str = f"Program {DRIFT_PROGRAM_ID} invoke"
 PROGRAM_LOG: str = "Program log: "
 PROGRAM_DATA: str = "Program data: "

@@ -37,7 +37,7 @@ def create_subscribe_request() -> Iterator[geyser_pb2.SubscribeRequest]:
 
     # Add a specific account to monitor
     # Note: This needs to be the base58 encoded public key
-    account_filter.account.append("dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH")
+    account_filter.account.append("CRFEX81cWA7JkUe5E5YrurfAszRdWxvaYCyAzG39s3Fw")
     account_filter.account.append("DRiP8pChV3hr8FkdgPpxpVwQh3dHnTzHgdbn5Z3fmwHc")
     account_filter.account.append("Fe4hMZrg7R97ZrbSScWBXUpQwZB9gzBnhodTCGyjkHsG")
     account_filter.nonempty_txn_signature = True

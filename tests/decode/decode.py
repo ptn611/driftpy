@@ -26,7 +26,7 @@ def program() -> Program:
     idl = Idl.from_json(raw)
     return Program(
         idl,
-        Pubkey.from_string("dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH"),
+        Pubkey.from_string("CRFEX81cWA7JkUe5E5YrurfAszRdWxvaYCyAzG39s3Fw"),
     )
 
 

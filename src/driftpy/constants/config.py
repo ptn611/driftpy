@@ -29,14 +29,14 @@ from driftpy.types import (
 
 DriftEnv = Literal["devnet", "mainnet"]
 
-DRIFT_PROGRAM_ID = Pubkey.from_string("dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH")
+DRIFT_PROGRAM_ID = Pubkey.from_string("CRFEX81cWA7JkUe5E5YrurfAszRdWxvaYCyAzG39s3Fw")
 SEQUENCER_PROGRAM_ID = Pubkey.from_string(
     "GDDMwNyyx8uB6zrqwBFHjLLG3TBYk2F8Az4yrQC5RzMp"
 )
 DEVNET_SEQUENCER_PROGRAM_ID = Pubkey.from_string(
     "FBngRHN4s5cmHagqy3Zd6xcK3zPJBeX5DixtHFbBhyCn"
 )
-VAULT_PROGRAM_ID = Pubkey.from_string("vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR")
+VAULT_PROGRAM_ID = Pubkey.from_string("CRFVTrHuSCoVR457quS4FJaGJrhppyqncaPyCKWooArd")
 
 
 @dataclass
