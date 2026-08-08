@@ -56,7 +56,7 @@ from driftpy.math.spot_position import (
     get_worst_case_token_amounts,
     is_spot_position_available,
 )
-from driftpy.math.trade import get_user_30d_rolling_volume_estimate
+from driftpy.math.trade import get_user_1w_rolling_volume_estimate
 from driftpy.oracles.strict_oracle_price import StrictOraclePrice
 from driftpy.types import (
     FeeTier,
@@ -1942,10 +1942,10 @@ class DriftUser:
     def get_user_fee_tier(
         self, market_type: MarketType, now: Optional[int] = None
     ) -> FeeTier:
-        """Returns a FeeTier adjusted for 30d volume and IF staked amount.
+        """Returns a FeeTier adjusted for 1w volume and IF staked amount.
 
         - If in high leverage mode and market is Perp, returns tier[0] directly.
-        - Otherwise, picks tier by 30d volume, then applies stake benefit to
+        - Otherwise, picks tier by 1w volume, then applies stake benefit to
           fee_numerator (discount) and maker_rebate_numerator (boost).
         """
         state = self.drift_client.get_state_account()
@@ -1955,7 +1955,7 @@ class DriftUser:
                 return copy.deepcopy(fee_tiers[0])
 
             user_stats = self.drift_client.get_user_stats().get_account()
-            total_30d_volume = get_user_30d_rolling_volume_estimate(user_stats, now)
+            total_1w_volume = get_user_1w_rolling_volume_estimate(user_stats, now)
             staked_gov_amount = user_stats.if_staked_gov_token_amount
 
             volume_thresholds = [
@@ -1976,7 +1976,7 @@ class DriftUser:
 
             fee_tier_index = 5
             for i, thresh in enumerate(volume_thresholds):
-                if total_30d_volume < thresh:
+                if total_1w_volume < thresh:
                     fee_tier_index = i
                     break
 

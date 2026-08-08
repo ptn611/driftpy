@@ -41,22 +41,22 @@ def decode_user_stat(buffer: bytes) -> UserStatsAccount:
     next_epoch_ts = read_bigint64le(buffer, offset, True)
     offset += 8
 
-    maker_volume_30d = read_bigint64le(buffer, offset, False)
+    maker_volume1w = read_bigint64le(buffer, offset, False)
     offset += 8
 
-    taker_volume_30d = read_bigint64le(buffer, offset, False)
+    taker_volume1w = read_bigint64le(buffer, offset, False)
     offset += 8
 
-    filler_volume_30d = read_bigint64le(buffer, offset, False)
+    filler_volume1w = read_bigint64le(buffer, offset, False)
     offset += 8
 
-    last_maker_volume_30d_ts = read_bigint64le(buffer, offset, True)
+    last_maker_volume1w_ts = read_bigint64le(buffer, offset, True)
     offset += 8
 
-    last_taker_volume_30d_ts = read_bigint64le(buffer, offset, True)
+    last_taker_volume1w_ts = read_bigint64le(buffer, offset, True)
     offset += 8
 
-    last_filler_volume_30d_ts = read_bigint64le(buffer, offset, True)
+    last_filler_volume1w_ts = read_bigint64le(buffer, offset, True)
     offset += 8
 
     if_staked_quote_asset_amount = read_bigint64le(buffer, offset, False)
@@ -111,12 +111,12 @@ def decode_user_stat(buffer: bytes) -> UserStatsAccount:
         referrer,
         user_fees,
         next_epoch_ts,
-        maker_volume_30d,
-        taker_volume_30d,
-        filler_volume_30d,
-        last_maker_volume_30d_ts,
-        last_taker_volume_30d_ts,
-        last_filler_volume_30d_ts,
+        maker_volume1w,
+        taker_volume1w,
+        filler_volume1w,
+        last_maker_volume1w_ts,
+        last_taker_volume1w_ts,
+        last_filler_volume1w_ts,
         if_staked_quote_asset_amount,
         number_of_sub_accounts,
         number_of_sub_accounts_created,

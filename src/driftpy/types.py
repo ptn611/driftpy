@@ -979,12 +979,12 @@ class UserStatsAccount:
     referrer: Pubkey
     fees: UserFees
     next_epoch_ts: int
-    maker_volume30d: int
-    taker_volume30d: int
-    filler_volume30d: int
-    last_maker_volume30d_ts: int
-    last_taker_volume30d_ts: int
-    last_filler_volume30d_ts: int
+    maker_volume1w: int
+    taker_volume1w: int
+    filler_volume1w: int
+    last_maker_volume1w_ts: int
+    last_taker_volume1w_ts: int
+    last_filler_volume1w_ts: int
     if_staked_quote_asset_amount: int
     number_of_sub_accounts: int
     number_of_sub_accounts_created: int
