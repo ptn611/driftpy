@@ -9,8 +9,8 @@ markdown_extensions:
   - meta
   - pymdownx.tabbed:
       alternate_style: true
-repo_url: https://github.com/velocity-exchange/driftpy
-repo_name: velocity-exchange/driftpy
+repo_url: https://github.com/ptn611/driftpy
+repo_name: ptn611/driftpy
 site_url: https://velocity-exchange.github.io/driftpy/
 plugins:
   - mkdocstrings:

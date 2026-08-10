@@ -10,7 +10,7 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/velocity-exchange/driftpy"
+homepage = "https://github.com/ptn611/driftpy"
 documentation = "https://velocity-exchange.github.io/driftpy/"
 
 [tool.poetry.dependencies]
