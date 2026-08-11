@@ -1,7 +1,7 @@
 """
 Some simple helpers for interacting with the vaults program.
 
-For a complete vaults SDK, please see https://github.com/velocity-exchange/drift-vaults
+For a complete vaults SDK, please see https://github.com/ptn611/drift-vaults
 """
 
 from driftpy.vaults.helpers import (

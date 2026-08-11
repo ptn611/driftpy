@@ -5,7 +5,7 @@ This module provides utilities for querying vault information, depositors,
 and other vault-related data.
 
 Python functions provided here are for basic usage.
-For a complete vaults SDK, please see https://github.com/velocity-exchange/drift-vaults
+For a complete vaults SDK, please see https://github.com/ptn611/drift-vaults
 """
 
 from pathlib import Path
