@@ -41,22 +41,22 @@ def decode_user_stat(buffer: bytes) -> UserStatsAccount:
     next_epoch_ts = read_bigint64le(buffer, offset, True)
     offset += 8
 
-    maker_volume1w = read_bigint64le(buffer, offset, False)
+    maker_volume30d = read_bigint64le(buffer, offset, False)
     offset += 8
 
-    taker_volume1w = read_bigint64le(buffer, offset, False)
+    taker_volume30d = read_bigint64le(buffer, offset, False)
     offset += 8
 
-    filler_volume1w = read_bigint64le(buffer, offset, False)
+    filler_volume30d = read_bigint64le(buffer, offset, False)
     offset += 8
 
-    last_maker_volume1w_ts = read_bigint64le(buffer, offset, True)
+    last_maker_volume30d_ts = read_bigint64le(buffer, offset, True)
     offset += 8
 
-    last_taker_volume1w_ts = read_bigint64le(buffer, offset, True)
+    last_taker_volume30d_ts = read_bigint64le(buffer, offset, True)
     offset += 8
 
-    last_filler_volume1w_ts = read_bigint64le(buffer, offset, True)
+    last_filler_volume30d_ts = read_bigint64le(buffer, offset, True)
     offset += 8
 
     if_staked_quote_asset_amount = read_bigint64le(buffer, offset, False)
@@ -104,19 +104,23 @@ def decode_user_stat(buffer: bytes) -> UserStatsAccount:
     last_fuel_if_bonus_update_ts = read_int32_le(buffer, offset, False)
     offset += 4
 
-    padding = [0] * 12
+    last_referrer_taker_volume30d_ts = read_int32_le(buffer, offset, False)
+    offset += 4
+
+    referrer_taker_volume30d = read_bigint64le(buffer, offset, False)
+    offset += 8
 
     return UserStatsAccount(
         authority,
         referrer,
         user_fees,
         next_epoch_ts,
-        maker_volume1w,
-        taker_volume1w,
-        filler_volume1w,
-        last_maker_volume1w_ts,
-        last_taker_volume1w_ts,
-        last_filler_volume1w_ts,
+        maker_volume30d,
+        taker_volume30d,
+        filler_volume30d,
+        last_maker_volume30d_ts,
+        last_taker_volume30d_ts,
+        last_filler_volume30d_ts,
         if_staked_quote_asset_amount,
         number_of_sub_accounts,
         number_of_sub_accounts_created,
@@ -131,5 +135,6 @@ def decode_user_stat(buffer: bytes) -> UserStatsAccount:
         fuel_maker,
         if_staked_gov_token_amount,
         last_fuel_if_bonus_update_ts,
-        padding,
+        last_referrer_taker_volume30d_ts,
+        referrer_taker_volume30d,
     )
