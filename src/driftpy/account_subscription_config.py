@@ -166,4 +166,5 @@ class AccountSubscriptionConfig:
                     account_public_key=user_pubkey,
                     program=program,
                     commitment=self.commitment,
+                    decode=decode_user,
                 )

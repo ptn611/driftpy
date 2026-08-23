@@ -93,7 +93,9 @@ async def get_user_account_and_slot(
     program: Program,
     user_public_key: Pubkey,
 ) -> Optional[DataAndSlot[UserAccount]]:
-    return await get_account_data_and_slot(user_public_key, program)
+    # Packed Order layout: route through the manual decoder so logical
+    # order fields (status/order_type/direction/...) are populated.
+    return await get_account_data_and_slot(user_public_key, program, decode_user)
 
 
 async def get_user_account(

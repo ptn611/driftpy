@@ -10,6 +10,7 @@ from driftpy.accounts import (
 )
 
 from driftpy.accounts.bulk_account_loader import BulkAccountLoader
+from driftpy.decode.user import decode_user
 from driftpy.types import UserAccount
 
 
@@ -24,7 +25,7 @@ class PollingUserAccountSubscriber(UserAccountSubscriber):
         self.program = program
         self.user_account_pubkey = user_account_pubkey
         self.data_and_slot: Optional[DataAndSlot[UserAccount]] = None
-        self.decode = self.program.coder.accounts.decode
+        self.decode = decode_user
         self.callback_id = None
 
     async def subscribe(self):
