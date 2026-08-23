@@ -27,7 +27,7 @@ def get_auction_price(order: Order, slot: int, oracle_price: int) -> int:
 
 
 def get_auction_price_for_fixed_auction(order: Order, slot: int) -> int:
-    slots_elapsed = slot - order.slot
+    slots_elapsed = max(0, slot - order.slot)
 
     delta_denominator = order.auction_duration
     delta_numerator = min(slots_elapsed, delta_denominator)
@@ -37,13 +37,13 @@ def get_auction_price_for_fixed_auction(order: Order, slot: int) -> int:
 
     if is_variant(order.direction, "Long"):
         price_delta = (
-            order.auction_end_price
-            - order.auction_start_price * delta_numerator // delta_denominator
+            (order.auction_end_price - order.auction_start_price)
+            * delta_numerator // delta_denominator
         )
     else:
         price_delta = (
-            order.auction_start_price
-            - order.auction_end_price * delta_numerator // delta_denominator
+            (order.auction_start_price - order.auction_end_price)
+            * delta_numerator // delta_denominator
         )
 
     if is_variant(order.direction, "Long"):
@@ -57,7 +57,7 @@ def get_auction_price_for_fixed_auction(order: Order, slot: int) -> int:
 def get_auction_price_for_oracle_offset_auction(
     order: Order, slot: int, oracle_price: int
 ) -> int:
-    slots_elapsed = slot - order.slot
+    slots_elapsed = max(0, slot - order.slot)
 
     delta_denominator = order.auction_duration
     delta_numerator = min(slots_elapsed, delta_denominator)
@@ -67,13 +67,13 @@ def get_auction_price_for_oracle_offset_auction(
 
     if is_variant(order.direction, "Long"):
         price_offset_delta = (
-            order.auction_end_price
-            - order.auction_start_price * delta_numerator // delta_denominator
+            (order.auction_end_price - order.auction_start_price)
+            * delta_numerator // delta_denominator
         )
     else:
         price_offset_delta = (
-            order.auction_start_price
-            - order.auction_end_price * delta_numerator // delta_denominator
+            (order.auction_start_price - order.auction_end_price)
+            * delta_numerator // delta_denominator
         )
 
     if is_variant(order.direction, "Long"):
