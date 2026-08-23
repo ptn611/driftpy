@@ -104,7 +104,10 @@ def decode_order_params(buffer: bytes) -> OrderParams:
     market_index = int.from_bytes(debug_read(2, "market_index"), "little")
 
     # reduceOnly (bool)
-    reduce_only = int.from_bytes(debug_read(1, "reduce_only"), "little") == 1
+    reduce_only_num = int.from_bytes(debug_read(1, "reduce_only"), "little")
+    if reduce_only_num not in (0, 1):
+        raise ValueError(f"Invalid reduce_only bool: {reduce_only_num}")
+    reduce_only = reduce_only_num == 1
 
     # PostOnlyParam (u8 enum)
     post_only_num = int.from_bytes(debug_read(1, "post_only"), "little")
