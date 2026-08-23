@@ -170,7 +170,8 @@ def cmp_orders(anchor: Order, custom: Order):
     )
     assert anchor.post_only == custom.post_only
     assert anchor.immediate_or_cancel == custom.immediate_or_cancel
-    assert anchor.oracle_price_offset == custom.oracle_price_offset
+    assert anchor.offset == custom.offset
+    assert anchor.offset_type == custom.offset_type
     assert anchor.auction_start_price == custom.auction_start_price
     assert anchor.auction_end_price == custom.auction_end_price
     assert anchor.max_ts == custom.max_ts

@@ -10,6 +10,15 @@ from driftpy.types import (
 )
 
 
+def _validate_option_tag(tag: int, field_name: str) -> int:
+    """borsh Option tag must be 0 (None) or 1 (Some) — fail closed otherwise."""
+    if tag not in (0, 1):
+        raise ValueError(
+            f"Invalid borsh Option tag {tag} for {field_name} (expected 0 or 1)"
+        )
+    return tag
+
+
 def read_bool(byte: int) -> bool:
     return byte != 0
 
@@ -105,14 +114,17 @@ def decode_order_params(buffer: bytes) -> OrderParams:
     immediate_or_cancel = (bit_flags & 0b0000_0001) != 0
 
     # maxTs (option<i64>)
-    max_ts_present = int.from_bytes(debug_read(1, "max_ts_present"), "little")
+    max_ts_present = _validate_option_tag(
+        int.from_bytes(debug_read(1, "max_ts_present"), "little"), "max_ts"
+    )
     max_ts = None
     if max_ts_present == 1:
         max_ts = int.from_bytes(debug_read(8, "max_ts"), "little", signed=True)
 
     # triggerPrice (option<u64>)
-    trigger_price_present = int.from_bytes(
-        debug_read(1, "trigger_price_present"), "little"
+    trigger_price_present = _validate_option_tag(
+        int.from_bytes(debug_read(1, "trigger_price_present"), "little"),
+        "trigger_price",
     )
     trigger_price = None
     if trigger_price_present == 1:
@@ -131,30 +143,35 @@ def decode_order_params(buffer: bytes) -> OrderParams:
         trigger_condition = OrderTriggerCondition.TriggeredBelow()
 
     # offset (option<i32>)
-    order_offset_present = int.from_bytes(debug_read(1, "offset_present"), "little")
+    order_offset_present = _validate_option_tag(
+        int.from_bytes(debug_read(1, "offset_present"), "little"), "offset"
+    )
     order_offset = None
     if order_offset_present == 1:
         order_offset = int.from_bytes(debug_read(4, "offset"), "little", signed=True)
 
     # offsetType (option<u8>) — 0=Oracle, 1=Queue
-    offset_type_present = int.from_bytes(
-        debug_read(1, "offset_type_present"), "little"
+    offset_type_present = _validate_option_tag(
+        int.from_bytes(debug_read(1, "offset_type_present"), "little"),
+        "offset_type",
     )
     order_offset_type = None
     if offset_type_present == 1:
         order_offset_type = int.from_bytes(debug_read(1, "offset_type"), "little")
 
     # auctionDuration (option<u8>)
-    auction_duration_present = int.from_bytes(
-        debug_read(1, "auction_duration_present"), "little"
+    auction_duration_present = _validate_option_tag(
+        int.from_bytes(debug_read(1, "auction_duration_present"), "little"),
+        "auction_duration",
     )
     auction_duration = None
     if auction_duration_present == 1:
         auction_duration = int.from_bytes(debug_read(1, "auction_duration"), "little")
 
     # auctionStartPrice (option<i64>)
-    auction_start_present = int.from_bytes(
-        debug_read(1, "auction_start_present"), "little"
+    auction_start_present = _validate_option_tag(
+        int.from_bytes(debug_read(1, "auction_start_present"), "little"),
+        "auction_start_price",
     )
     auction_start_price = None
     if auction_start_present == 1:
@@ -163,7 +180,10 @@ def decode_order_params(buffer: bytes) -> OrderParams:
         )
 
     # auctionEndPrice (option<i64>)
-    auction_end_present = int.from_bytes(debug_read(1, "auction_end_present"), "little")
+    auction_end_present = _validate_option_tag(
+        int.from_bytes(debug_read(1, "auction_end_present"), "little"),
+        "auction_end_price",
+    )
     auction_end_price = None
     if auction_end_present == 1:
         auction_end_price = int.from_bytes(
@@ -356,7 +376,9 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     offset += 1
 
     # Read max_ts (option<i64>)
-    max_ts_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    max_ts_present = _validate_option_tag(
+        int.from_bytes(buffer[offset : offset + 1], "little"), "max_ts"
+    )
     offset += 1
 
     max_ts = None
@@ -365,7 +387,9 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         offset += 8
 
     # Read trigger_price (option<u64>)
-    trigger_price_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    trigger_price_present = _validate_option_tag(
+        int.from_bytes(buffer[offset : offset + 1], "little"), "trigger_price"
+    )
     offset += 1
 
     trigger_price = None
@@ -387,7 +411,9 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         trigger_condition = OrderTriggerCondition.TriggeredBelow()
 
     # Read offset (option<i32>)
-    order_offset_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    order_offset_present = _validate_option_tag(
+        int.from_bytes(buffer[offset : offset + 1], "little"), "offset"
+    )
     offset += 1
 
     order_offset = None
@@ -398,7 +424,9 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         offset += 4
 
     # Read offset_type (option<u8>) — 0=Oracle, 1=Queue
-    offset_type_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    offset_type_present = _validate_option_tag(
+        int.from_bytes(buffer[offset : offset + 1], "little"), "offset_type"
+    )
     offset += 1
 
     order_offset_type = None
@@ -407,7 +435,9 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         offset += 1
 
     # Read auction_duration (option<u8>)
-    auction_duration_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    auction_duration_present = _validate_option_tag(
+        int.from_bytes(buffer[offset : offset + 1], "little"), "auction_duration"
+    )
     offset += 1
 
     auction_duration = None
@@ -416,7 +446,9 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         offset += 1
 
     # Read auction_start_price (option<i64>)
-    auction_start_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    auction_start_present = _validate_option_tag(
+        int.from_bytes(buffer[offset : offset + 1], "little"), "auction_start_price"
+    )
     offset += 1
 
     auction_start_price = None
@@ -427,7 +459,9 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         offset += 8
 
     # Read auction_end_price (option<i64>)
-    auction_end_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    auction_end_present = _validate_option_tag(
+        int.from_bytes(buffer[offset : offset + 1], "little"), "auction_end_price"
+    )
     offset += 1
 
     auction_end_price = None
