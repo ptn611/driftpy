@@ -240,59 +240,66 @@ def decode_signed_msg_order_params_message(
     buffer: bytes,
 ) -> SignedMsgOrderParamsMessage:
     signed_msg_order_params_buf = buffer[8:]
+    offset = 0
+
+    def read(size: int, field_name: str) -> bytes:
+        nonlocal offset
+        if offset + size > len(signed_msg_order_params_buf):
+            raise ValueError(
+                f"Buffer overflow reading {field_name} at offset {offset}, need {size} bytes, buffer length {len(signed_msg_order_params_buf)}"
+            )
+        value = signed_msg_order_params_buf[offset : offset + size]
+        offset += size
+        return value
 
     order_params, bytes_read = decode_order_params_with_size(
         signed_msg_order_params_buf
     )
-    offset = bytes_read
+    offset += bytes_read
 
-    sub_account_id = read_uint16_le(signed_msg_order_params_buf, offset)
-    offset += 2
+    sub_account_id = int.from_bytes(read(2, "sub_account_id"), "little")
 
-    slot = read_bigint64le(signed_msg_order_params_buf, offset, False)
-    offset += 8
+    slot = int.from_bytes(read(8, "slot"), "little")
 
-    uuid = signed_msg_order_params_buf[offset : offset + 8]
-    offset += 8
+    uuid = read(8, "uuid")
 
-    take_profit_present = read_uint8(signed_msg_order_params_buf, offset)
-    offset += 1
+    take_profit_present = _validate_option_tag(
+        int.from_bytes(read(1, "take_profit"), "little"), "take_profit"
+    )
     take_profit = None
     if take_profit_present == 1:
-        take_profit = decode_signed_msg_trigger_params(
-            signed_msg_order_params_buf[offset : offset + 16]
-        )
-        offset += 16
+        take_profit = decode_signed_msg_trigger_params(read(16, "take_profit"))
 
-    stop_loss_present = read_uint8(signed_msg_order_params_buf, offset)
-    offset += 1
+    stop_loss_present = _validate_option_tag(
+        int.from_bytes(read(1, "stop_loss"), "little"), "stop_loss"
+    )
     stop_loss = None
     if stop_loss_present == 1:
-        stop_loss = decode_signed_msg_trigger_params(
-            signed_msg_order_params_buf[offset : offset + 16]
-        )
-        offset += 16
+        stop_loss = decode_signed_msg_trigger_params(read(16, "stop_loss"))
 
-    max_margin_ratio_present = read_uint8(signed_msg_order_params_buf, offset)
-    offset += 1
+    max_margin_ratio_present = _validate_option_tag(
+        int.from_bytes(read(1, "max_margin_ratio"), "little"), "max_margin_ratio"
+    )
     max_margin_ratio = None
     if max_margin_ratio_present == 1:
-        max_margin_ratio = read_uint16_le(signed_msg_order_params_buf, offset)
-        offset += 2
+        max_margin_ratio = int.from_bytes(read(2, "max_margin_ratio"), "little")
 
-    builder_idx_present = read_uint8(signed_msg_order_params_buf, offset)
-    offset += 1
+    builder_idx_present = _validate_option_tag(
+        int.from_bytes(read(1, "builder_idx"), "little"), "builder_idx"
+    )
     builder_idx = None
     if builder_idx_present == 1:
-        builder_idx = read_uint8(signed_msg_order_params_buf, offset)
-        offset += 1
+        builder_idx = int.from_bytes(read(1, "builder_idx"), "little")
 
-    builder_fee_tenth_bps_present = read_uint8(signed_msg_order_params_buf, offset)
-    offset += 1
+    builder_fee_tenth_bps_present = _validate_option_tag(
+        int.from_bytes(read(1, "builder_fee_tenth_bps"), "little"),
+        "builder_fee_tenth_bps",
+    )
     builder_fee_tenth_bps = None
     if builder_fee_tenth_bps_present == 1:
-        builder_fee_tenth_bps = read_uint16_le(signed_msg_order_params_buf, offset)
-        offset += 2
+        builder_fee_tenth_bps = int.from_bytes(
+            read(2, "builder_fee_tenth_bps"), "little"
+        )
 
     return SignedMsgOrderParamsMessage(
         signed_msg_order_params=order_params,
