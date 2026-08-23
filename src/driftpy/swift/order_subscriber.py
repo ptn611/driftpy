@@ -189,7 +189,7 @@ class SwiftOrderSubscriber:
                                         decoded_message = self.drift_client.decode_signed_msg_order_params_message(
                                             signed_order_params_buf, is_delegate=True
                                         )
-                                    except construct.core.StreamError as e:
+                                    except (construct.core.StreamError, ValueError) as e:
                                         logger.error(
                                             f"Failed to decode SignedMsgOrderParamsDelegateMessage: {e}"
                                         )
@@ -203,7 +203,7 @@ class SwiftOrderSubscriber:
                                         decoded_message = self.drift_client.decode_signed_msg_order_params_message(
                                             signed_order_params_buf, is_delegate=False
                                         )
-                                    except construct.core.StreamError as e:
+                                    except (construct.core.StreamError, ValueError) as e:
                                         logger.error(
                                             f"Failed to decode SignedMsgOrderParamsMessage: {e}"
                                         )

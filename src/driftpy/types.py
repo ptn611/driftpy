@@ -1546,6 +1546,7 @@ class SignedMsgOrderParamsMessage:
     max_margin_ratio: int | None
     builder_idx: int | None
     builder_fee_tenth_bps: int | None
+    isolated_position_deposit: int | None
 
 
 @dataclass
@@ -1559,6 +1560,7 @@ class SignedMsgOrderParamsDelegateMessage:
     max_margin_ratio: int | None
     builder_idx: int | None
     builder_fee_tenth_bps: int | None
+    isolated_position_deposit: int | None
 
 
 class OrderBitFlag:

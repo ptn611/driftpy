@@ -1,3 +1,5 @@
+from solders.pubkey import Pubkey
+
 from driftpy.types import (
     MarketType,
     OrderParams,
@@ -5,6 +7,7 @@ from driftpy.types import (
     OrderType,
     PositionDirection,
     PostOnlyParams,
+    SignedMsgOrderParamsDelegateMessage,
     SignedMsgOrderParamsMessage,
     SignedMsgTriggerOrderParams,
 )
@@ -301,6 +304,17 @@ def decode_signed_msg_order_params_message(
             read(2, "builder_fee_tenth_bps"), "little"
         )
 
+    # Read isolated_position_deposit (option<u64>)
+    isolated_position_deposit_present = _validate_option_tag(
+        int.from_bytes(read(1, "isolated_position_deposit"), "little"),
+        "isolated_position_deposit",
+    )
+    isolated_position_deposit = None
+    if isolated_position_deposit_present == 1:
+        isolated_position_deposit = int.from_bytes(
+            read(8, "isolated_position_deposit"), "little"
+        )
+
     return SignedMsgOrderParamsMessage(
         signed_msg_order_params=order_params,
         sub_account_id=sub_account_id,
@@ -311,6 +325,93 @@ def decode_signed_msg_order_params_message(
         max_margin_ratio=max_margin_ratio,
         builder_idx=builder_idx,
         builder_fee_tenth_bps=builder_fee_tenth_bps,
+        isolated_position_deposit=isolated_position_deposit,
+    )
+
+
+def decode_signed_msg_delegate_message(
+    buffer: bytes,
+) -> SignedMsgOrderParamsDelegateMessage:
+    offset = 0
+
+    def read(size: int, field_name: str) -> bytes:
+        nonlocal offset
+        if offset + size > len(buffer):
+            raise ValueError(
+                f"Buffer overflow reading {field_name} at offset {offset}, need {size} bytes, buffer length {len(buffer)}"
+            )
+        value = buffer[offset : offset + size]
+        offset += size
+        return value
+
+    order_params, bytes_read = decode_order_params_with_size(buffer)
+    offset += bytes_read
+
+    taker_pubkey = Pubkey(read(32, "taker_pubkey"))
+
+    slot = int.from_bytes(read(8, "slot"), "little")
+
+    uuid = read(8, "uuid")
+
+    take_profit_present = _validate_option_tag(
+        int.from_bytes(read(1, "take_profit"), "little"), "take_profit"
+    )
+    take_profit = None
+    if take_profit_present == 1:
+        take_profit = decode_signed_msg_trigger_params(read(16, "take_profit"))
+
+    stop_loss_present = _validate_option_tag(
+        int.from_bytes(read(1, "stop_loss"), "little"), "stop_loss"
+    )
+    stop_loss = None
+    if stop_loss_present == 1:
+        stop_loss = decode_signed_msg_trigger_params(read(16, "stop_loss"))
+
+    max_margin_ratio_present = _validate_option_tag(
+        int.from_bytes(read(1, "max_margin_ratio"), "little"), "max_margin_ratio"
+    )
+    max_margin_ratio = None
+    if max_margin_ratio_present == 1:
+        max_margin_ratio = int.from_bytes(read(2, "max_margin_ratio"), "little")
+
+    builder_idx_present = _validate_option_tag(
+        int.from_bytes(read(1, "builder_idx"), "little"), "builder_idx"
+    )
+    builder_idx = None
+    if builder_idx_present == 1:
+        builder_idx = int.from_bytes(read(1, "builder_idx"), "little")
+
+    builder_fee_tenth_bps_present = _validate_option_tag(
+        int.from_bytes(read(1, "builder_fee_tenth_bps"), "little"),
+        "builder_fee_tenth_bps",
+    )
+    builder_fee_tenth_bps = None
+    if builder_fee_tenth_bps_present == 1:
+        builder_fee_tenth_bps = int.from_bytes(
+            read(2, "builder_fee_tenth_bps"), "little"
+        )
+
+    isolated_position_deposit_present = _validate_option_tag(
+        int.from_bytes(read(1, "isolated_position_deposit"), "little"),
+        "isolated_position_deposit",
+    )
+    isolated_position_deposit = None
+    if isolated_position_deposit_present == 1:
+        isolated_position_deposit = int.from_bytes(
+            read(8, "isolated_position_deposit"), "little"
+        )
+
+    return SignedMsgOrderParamsDelegateMessage(
+        signed_msg_order_params=order_params,
+        taker_pubkey=taker_pubkey,
+        slot=slot,
+        uuid=uuid,
+        take_profit_order_params=take_profit,
+        stop_loss_order_params=stop_loss,
+        max_margin_ratio=max_margin_ratio,
+        builder_idx=builder_idx,
+        builder_fee_tenth_bps=builder_fee_tenth_bps,
+        isolated_position_deposit=isolated_position_deposit,
     )
 
 
@@ -381,7 +482,10 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     market_index = int.from_bytes(read(2, "field"), "little")
 
     # Read reduce_only (bool)
-    reduce_only = int.from_bytes(read(1, "field"), "little") == 1
+    reduce_only_num = int.from_bytes(read(1, "reduce_only"), "little")
+    if reduce_only_num not in (0, 1):
+        raise ValueError(f"Invalid reduce_only bool: {reduce_only_num}")
+    reduce_only = reduce_only_num == 1
 
     # Read post_only (u8 enum)
     post_only_num = int.from_bytes(read(1, "field"), "little")

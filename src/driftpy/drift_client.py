@@ -77,6 +77,10 @@ from driftpy.constants.config import (
 )
 from driftpy.constants.numeric_constants import QUOTE_SPOT_MARKET_INDEX
 from driftpy.constants.spot_markets import WRAPPED_SOL_MINT
+from driftpy.decode.signed_msg_order import (
+    decode_signed_msg_delegate_message,
+    decode_signed_msg_order_params_message as _decode_signed_msg_standard_message,
+)
 from driftpy.decode.utils import decode_name
 from driftpy.drift_user import DriftUser
 from driftpy.drift_user_stats import DriftUserStats, UserStatsSubscriptionConfig
@@ -2101,15 +2105,10 @@ class DriftClient:
         self, signed_msg_order_params_buf: bytes, is_delegate: bool = False
     ) -> Union[SignedMsgOrderParamsMessage, SignedMsgOrderParamsDelegateMessage]:
         payload = signed_msg_order_params_buf[8:]
-        payload_with_padding = payload + bytes(128)
         if is_delegate:
-            return self.program.coder.types.decode(
-                "SignedMsgOrderParamsDelegateMessage", payload_with_padding
-            )
+            return decode_signed_msg_delegate_message(payload)
         else:
-            return self.program.coder.types.decode(
-                "SignedMsgOrderParamsMessage", payload_with_padding
-            )
+            return _decode_signed_msg_standard_message(payload)
 
     def sign_message(self, message: bytes) -> bytes:
         """Sign a message with the wallet keypair.
