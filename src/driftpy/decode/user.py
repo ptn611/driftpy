@@ -14,7 +14,10 @@ from driftpy.types import (
     SpotBalanceType,
     SpotPosition,
     UserAccount,
+    is_variant,
 )
+
+from driftpy.decode.order import ORDER_SIZE_BYTES, unpack_order_flags
 
 # Faster decoding for User Accounts
 # We skip all zero data to streamline the process and avoid unnecessary decoding
@@ -147,123 +150,33 @@ def decode_user(buffer: bytes) -> UserAccount:
 
     orders: List[Order] = []
     for _ in range(32):
-        # skip order if it's not open
-        if read_uint8(buffer, offset + 82) != 1:
-            offset += 96
+        flags = [
+            read_uint8(buffer, offset + 85),
+            read_uint8(buffer, offset + 86),
+            read_uint8(buffer, offset + 87),
+        ]
+        unpacked = unpack_order_flags(flags)
+        if unpacked is None or not is_variant(unpacked["status"], "Open"):
+            offset += ORDER_SIZE_BYTES
             continue
 
         slot = read_bigint64le(buffer, offset, False)
-        offset += 8
-
-        price = read_bigint64le(buffer, offset, False)
-        offset += 8
-
-        base_asset_amount = read_bigint64le(buffer, offset, False)
-        offset += 8
-
-        base_asset_amount_filled = read_bigint64le(buffer, offset, False)
-        offset += 8
-
-        quote_asset_amount_filled = read_bigint64le(buffer, offset, False)
-        offset += 8
-
-        trigger_price = read_bigint64le(buffer, offset, False)
-        offset += 8
-
-        auction_start_price = read_bigint64le(buffer, offset, True)
-        offset += 8
-
-        auction_end_price = read_bigint64le(buffer, offset, True)
-        offset += 8
-
-        max_ts = read_bigint64le(buffer, offset, True)
-        offset += 8
-
-        oracle_price_offset = read_int32_le(buffer, offset, True)
-        offset += 4
-
-        order_id = read_int32_le(buffer, offset, False)
-        offset += 4
-
-        market_index = read_uint16_le(buffer, offset)
-        offset += 2
-
-        order_status_num = read_uint8(buffer, offset)
-        status: OrderStatus = (
-            OrderStatus.Init() if order_status_num == 0 else OrderStatus.Open()
-        )
-        offset += 1
-
-        order_type_num = read_uint8(buffer, offset)
-        order_type: OrderType
-        if order_type_num == 0:
-            order_type = OrderType.Market()
-        elif order_type_num == 1:
-            order_type = OrderType.Limit()
-        elif order_type_num == 2:
-            order_type = OrderType.TriggerMarket()
-        elif order_type_num == 3:
-            order_type = OrderType.TriggerLimit()
-        elif order_type_num == 4:
-            order_type = OrderType.Oracle()
-        else:
-            raise ValueError(f"Invalid order type: {order_type_num}")
-
-        offset += 1
-
-        market_type_num = read_uint8(buffer, offset)
-        market_type: MarketType = (
-            MarketType.Spot() if market_type_num == 0 else MarketType.Perp()
-        )
-        offset += 1
-
-        user_order_id = read_uint8(buffer, offset)
-        offset += 1
-
-        existing_position_direction_num = read_uint8(buffer, offset)
-        existing_position_direction: PositionDirection = (
-            PositionDirection.Long()
-            if existing_position_direction_num == 0
-            else PositionDirection.Short()
-        )
-        offset += 1
-
-        position_direction_num = read_uint8(buffer, offset)
-        direction: PositionDirection = (
-            PositionDirection.Long()
-            if position_direction_num == 0
-            else PositionDirection.Short()
-        )
-        offset += 1
-
-        reduce_only = read_uint8(buffer, offset) == 1
-        offset += 1
-
-        post_only = read_uint8(buffer, offset) == 1
-        offset += 1
-
-        immediate_or_cancel = read_uint8(buffer, offset) == 1
-        offset += 1
-
-        trigger_condition_num = read_uint8(buffer, offset)
-        trigger_condition: OrderTriggerCondition
-        if trigger_condition_num == 0:
-            trigger_condition = OrderTriggerCondition.Above()
-        elif trigger_condition_num == 1:
-            trigger_condition = OrderTriggerCondition.Below()
-        elif trigger_condition_num == 2:
-            trigger_condition = OrderTriggerCondition.TriggeredAbove()
-        elif trigger_condition_num == 3:
-            trigger_condition = OrderTriggerCondition.TriggeredBelow()
-        offset += 1
-
-        auction_duration = read_uint8(buffer, offset)
-        offset += 1
-        posted_slot_tail = read_uint8(buffer, offset)
-        offset += 1
-        bit_flags = read_uint8(buffer, offset)
-        offset += 1
-        offset += 1  # padding
+        price = read_bigint64le(buffer, offset + 8, False)
+        base_asset_amount = read_bigint64le(buffer, offset + 16, False)
+        base_asset_amount_filled = read_bigint64le(buffer, offset + 24, False)
+        quote_asset_amount_filled = read_bigint64le(buffer, offset + 32, False)
+        trigger_price = read_bigint64le(buffer, offset + 40, False)
+        auction_start_price = read_bigint64le(buffer, offset + 48, True)
+        auction_end_price = read_bigint64le(buffer, offset + 56, True)
+        max_ts = read_bigint64le(buffer, offset + 64, True)
+        oracle_price_offset = read_int32_le(buffer, offset + 72, True)
+        order_id = read_int32_le(buffer, offset + 76, False)
+        market_index = read_uint16_le(buffer, offset + 80)
+        user_order_id = read_uint8(buffer, offset + 82)
+        auction_duration = read_uint8(buffer, offset + 83)
+        posted_slot_tail = read_uint8(buffer, offset + 84)
+        bit_flags = unpacked["bit_flags"]
+        offset += ORDER_SIZE_BYTES
 
         orders.append(
             Order(
@@ -279,16 +192,18 @@ def decode_user(buffer: bytes) -> UserAccount:
                 oracle_price_offset=oracle_price_offset,
                 order_id=order_id,
                 market_index=market_index,
-                status=status,
-                order_type=order_type,
-                market_type=market_type,
+                status=unpacked["status"],
+                order_type=unpacked["order_type"],
+                market_type=unpacked["market_type"],
                 user_order_id=user_order_id,
-                existing_position_direction=existing_position_direction,
-                direction=direction,
-                reduce_only=reduce_only,
-                post_only=post_only,
-                immediate_or_cancel=immediate_or_cancel,
-                trigger_condition=trigger_condition,
+                existing_position_direction=unpacked[
+                    "existing_position_direction"
+                ],
+                direction=unpacked["direction"],
+                reduce_only=unpacked["reduce_only"],
+                post_only=unpacked["post_only"],
+                immediate_or_cancel=unpacked["immediate_or_cancel"],
+                trigger_condition=unpacked["trigger_condition"],
                 auction_duration=auction_duration,
                 bit_flags=bit_flags,
                 posted_slot_tail=posted_slot_tail,
