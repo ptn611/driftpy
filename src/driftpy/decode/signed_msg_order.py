@@ -223,13 +223,13 @@ def decode_order_params(buffer: bytes) -> OrderParams:
 
 
 def decode_signed_msg_trigger_params(buffer: bytes) -> SignedMsgTriggerOrderParams:
-    offset = 0
+    if len(buffer) < 16:
+        raise ValueError(
+            f"Buffer too short for trigger params: need 16 bytes, got {len(buffer)}"
+        )
 
-    trigger_price = int.from_bytes(buffer[offset : offset + 8], "little")
-    offset += 8
-
-    base_asset_amount = int.from_bytes(buffer[offset : offset + 8], "little")
-    offset += 8
+    trigger_price = int.from_bytes(buffer[0:8], "little")
+    base_asset_amount = int.from_bytes(buffer[8:16], "little")
 
     return SignedMsgTriggerOrderParams(
         trigger_price=trigger_price, base_asset_amount=base_asset_amount
@@ -319,9 +319,18 @@ def read_bytes(buffer, offset, size):
 def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     offset = 0
 
+    def read(size: int, field_name: str) -> bytes:
+        nonlocal offset
+        if offset + size > len(buffer):
+            raise ValueError(
+                f"Buffer overflow reading {field_name} at offset {offset}, need {size} bytes, buffer length {len(buffer)}"
+            )
+        value = buffer[offset : offset + size]
+        offset += size
+        return value
+
     # Read order_type (u8)
-    order_type_num = int.from_bytes(buffer[offset : offset + 1], "little")
-    offset += 1
+    order_type_num = int.from_bytes(read(1, "field"), "little")
 
     if order_type_num == 0:
         order_type = OrderType.Market()
@@ -337,8 +346,7 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         raise ValueError(f"Invalid order type: {order_type_num}")
 
     # Read market_type (u8)
-    market_type_num = int.from_bytes(buffer[offset : offset + 1], "little")
-    offset += 1
+    market_type_num = int.from_bytes(read(1, "field"), "little")
     if market_type_num not in (0, 1):
         raise ValueError(f"Invalid market type: {market_type_num}")
     market_type = (
@@ -346,8 +354,7 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     )
 
     # Read direction (u8)
-    direction_num = int.from_bytes(buffer[offset : offset + 1], "little")
-    offset += 1
+    direction_num = int.from_bytes(read(1, "field"), "little")
     if direction_num not in (0, 1):
         raise ValueError(f"Invalid position direction: {direction_num}")
     direction = (
@@ -355,28 +362,22 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     )
 
     # Read user_order_id (u8)
-    user_order_id = int.from_bytes(buffer[offset : offset + 1], "little")
-    offset += 1
+    user_order_id = int.from_bytes(read(1, "field"), "little")
 
     # Read base_asset_amount (u64)
-    base_asset_amount = int.from_bytes(buffer[offset : offset + 8], "little")
-    offset += 8
+    base_asset_amount = int.from_bytes(read(8, "field"), "little")
 
     # Read price (u64)
-    price = int.from_bytes(buffer[offset : offset + 8], "little")
-    offset += 8
+    price = int.from_bytes(read(8, "field"), "little")
 
     # Read market_index (u16)
-    market_index = int.from_bytes(buffer[offset : offset + 2], "little")
-    offset += 2
+    market_index = int.from_bytes(read(2, "field"), "little")
 
     # Read reduce_only (bool)
-    reduce_only = int.from_bytes(buffer[offset : offset + 1], "little") == 1
-    offset += 1
+    reduce_only = int.from_bytes(read(1, "field"), "little") == 1
 
     # Read post_only (u8 enum)
-    post_only_num = int.from_bytes(buffer[offset : offset + 1], "little")
-    offset += 1
+    post_only_num = int.from_bytes(read(1, "field"), "little")
 
     if post_only_num == 0:
         post_only = PostOnlyParams.NONE()
@@ -390,34 +391,28 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         raise ValueError(f"Invalid post-only param: {post_only_num}")
 
     # bitFlags (u8) — bit 0 = immediateOrCancel
-    bit_flags = int.from_bytes(buffer[offset : offset + 1], "little")
-    offset += 1
+    bit_flags = int.from_bytes(read(1, "field"), "little")
 
     # Read max_ts (option<i64>)
     max_ts_present = _validate_option_tag(
-        int.from_bytes(buffer[offset : offset + 1], "little"), "max_ts"
+        int.from_bytes(read(1, "field"), "little"), "max_ts"
     )
-    offset += 1
 
     max_ts = None
     if max_ts_present == 1:
-        max_ts = int.from_bytes(buffer[offset : offset + 8], "little", signed=True)
-        offset += 8
+        max_ts = int.from_bytes(read(8, "field"), "little", signed=True)
 
     # Read trigger_price (option<u64>)
     trigger_price_present = _validate_option_tag(
-        int.from_bytes(buffer[offset : offset + 1], "little"), "trigger_price"
+        int.from_bytes(read(1, "field"), "little"), "trigger_price"
     )
-    offset += 1
 
     trigger_price = None
     if trigger_price_present == 1:
-        trigger_price = int.from_bytes(buffer[offset : offset + 8], "little")
-        offset += 8
+        trigger_price = int.from_bytes(read(8, "field"), "little")
 
     # Read trigger_condition (u8 enum)
-    trigger_condition_num = int.from_bytes(buffer[offset : offset + 1], "little")
-    offset += 1
+    trigger_condition_num = int.from_bytes(read(1, "field"), "little")
 
     if trigger_condition_num == 0:
         trigger_condition = OrderTriggerCondition.Above()
@@ -432,64 +427,48 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
 
     # Read offset (option<i32>)
     order_offset_present = _validate_option_tag(
-        int.from_bytes(buffer[offset : offset + 1], "little"), "offset"
+        int.from_bytes(read(1, "field"), "little"), "offset"
     )
-    offset += 1
 
     order_offset = None
     if order_offset_present == 1:
-        order_offset = int.from_bytes(
-            buffer[offset : offset + 4], "little", signed=True
-        )
-        offset += 4
+        order_offset = int.from_bytes(read(4, "offset"), "little", signed=True)
 
     # Read offset_type (option<u8>) — 0=Oracle, 1=Queue
     offset_type_present = _validate_option_tag(
-        int.from_bytes(buffer[offset : offset + 1], "little"), "offset_type"
+        int.from_bytes(read(1, "field"), "little"), "offset_type"
     )
-    offset += 1
 
     order_offset_type = None
     if offset_type_present == 1:
-        order_offset_type = int.from_bytes(buffer[offset : offset + 1], "little")
-        offset += 1
+        order_offset_type = int.from_bytes(read(1, "field"), "little")
 
     # Read auction_duration (option<u8>)
     auction_duration_present = _validate_option_tag(
-        int.from_bytes(buffer[offset : offset + 1], "little"), "auction_duration"
+        int.from_bytes(read(1, "field"), "little"), "auction_duration"
     )
-    offset += 1
 
     auction_duration = None
     if auction_duration_present == 1:
-        auction_duration = int.from_bytes(buffer[offset : offset + 1], "little")
-        offset += 1
+        auction_duration = int.from_bytes(read(1, "field"), "little")
 
     # Read auction_start_price (option<i64>)
     auction_start_present = _validate_option_tag(
-        int.from_bytes(buffer[offset : offset + 1], "little"), "auction_start_price"
+        int.from_bytes(read(1, "field"), "little"), "auction_start_price"
     )
-    offset += 1
 
     auction_start_price = None
     if auction_start_present == 1:
-        auction_start_price = int.from_bytes(
-            buffer[offset : offset + 8], "little", signed=True
-        )
-        offset += 8
+        auction_start_price = int.from_bytes(read(8, "auction_start_price"), "little", signed=True)
 
     # Read auction_end_price (option<i64>)
     auction_end_present = _validate_option_tag(
-        int.from_bytes(buffer[offset : offset + 1], "little"), "auction_end_price"
+        int.from_bytes(read(1, "field"), "little"), "auction_end_price"
     )
-    offset += 1
 
     auction_end_price = None
     if auction_end_present == 1:
-        auction_end_price = int.from_bytes(
-            buffer[offset : offset + 8], "little", signed=True
-        )
-        offset += 8
+        auction_end_price = int.from_bytes(read(8, "auction_end_price"), "little", signed=True)
 
     return OrderParams(
         order_type=order_type,
