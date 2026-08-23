@@ -16,14 +16,26 @@ def is_auction_complete(order: Order, slot: int) -> bool:
 
 
 def get_auction_price(order: Order, slot: int, oracle_price: int) -> int:
-    if is_one_of_variant(
-        order.order_type, ["Market", "TriggerMarket", "Limit", "TriggerLimit"]
-    ):
+    # Router mirrors contract calculate_auction_price:
+    # OracleTriggerMarket trigger orders and oracle-offset Limits price off
+    # oracle-offset auctions; other Market/Trigger/Limit types use fixed.
+    if is_variant(order.order_type, "TriggerMarket") and order.bit_flags & 0b10:
+        return get_auction_price_for_oracle_offset_auction(
+            order, slot, oracle_price
+        )
+    if is_one_of_variant(order.order_type, ["Market", "TriggerMarket", "TriggerLimit"]):
         return get_auction_price_for_fixed_auction(order, slot)
-    elif is_variant(order.order_type, "Oracle"):
-        return get_auction_price_for_oracle_offset_auction(order, slot, oracle_price)
-    else:
-        raise ValueError(f"Can't get auction price for order type {order.order_type}")
+    if is_variant(order.order_type, "Limit"):
+        if order.offset != 0 and order.offset_type == 0:  # 0=Oracle
+            return get_auction_price_for_oracle_offset_auction(
+                order, slot, oracle_price
+            )
+        return get_auction_price_for_fixed_auction(order, slot)
+    if is_variant(order.order_type, "Oracle"):
+        return get_auction_price_for_oracle_offset_auction(
+            order, slot, oracle_price
+        )
+    raise ValueError(f"Can't get auction price for order type {order.order_type}")
 
 
 def get_auction_price_for_fixed_auction(order: Order, slot: int) -> int:
