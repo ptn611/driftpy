@@ -153,7 +153,8 @@ class DLOB:
             node_type = "trigger"
         elif is_one_of_variant(order.order_type, ["Market", "TriggerMarket", "Oracle"]):
             node_type = "market"
-        elif order.oracle_price_offset != 0:
+        elif order.offset != 0 and order.offset_type == 0:
+            # 0 = Oracle — floating limit priced off oracle
             node_type = "floating_limit"
         else:
             is_resting = is_resting_limit_order(order, slot)

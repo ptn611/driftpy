@@ -27,8 +27,9 @@ def get_limit_price(
 ) -> int:
     if has_auction_price(order, slot):
         limit_price = get_auction_price(order, slot, oracle_price_data.price)
-    elif order.oracle_price_offset != 0:
-        limit_price = oracle_price_data.price + order.oracle_price_offset
+    elif order.offset != 0 and order.offset_type == 0:
+        # 0 = Oracle — queue-offset orders price from queue anchor, not oracle
+        limit_price = oracle_price_data.price + order.offset
     elif order.price == 0:
         limit_price = fallback_price
     else:

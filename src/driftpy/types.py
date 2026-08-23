@@ -456,7 +456,9 @@ class OrderParams:
     trigger_condition: OrderTriggerCondition = field(
         default_factory=OrderTriggerCondition.Above
     )
-    oracle_price_offset: Optional[int] = None
+    offset: Optional[int] = None
+    # 0=Oracle, 1=Queue
+    offset_type: Optional[int] = None
     auction_duration: Optional[int] = None
     auction_start_price: Optional[int] = None
     auction_end_price: Optional[int] = None
@@ -500,7 +502,9 @@ class ModifyOrderParams:
     max_ts: Optional[int] = None
     trigger_price: Optional[int] = None
     trigger_condition: Optional[OrderTriggerCondition] = None
-    oracle_price_offset: Optional[int] = None
+    offset: Optional[int] = None
+    # 0=Oracle, 1=Queue
+    offset_type: Optional[int] = None
     auction_duration: Optional[int] = None
     auction_start_price: Optional[int] = None
     auction_end_price: Optional[int] = None
@@ -685,7 +689,9 @@ class Order:
     auction_start_price: int
     auction_end_price: int
     max_ts: int
-    oracle_price_offset: int
+    offset: int
+    # 0=Oracle, 1=Queue (packed flags[1] bit 3)
+    offset_type: int
     order_id: int
     market_index: int
     status: OrderStatus
@@ -1510,7 +1516,8 @@ class OptionalOrderParams(TypedDict, total=False):
     max_ts: NotRequired[Optional[int]]
     trigger_price: NotRequired[Optional[int]]
     trigger_condition: NotRequired[OrderTriggerCondition]
-    oracle_price_offset: NotRequired[Optional[int]]
+    offset: NotRequired[Optional[int]]
+    offset_type: NotRequired[Optional[int]]
     auction_duration: NotRequired[Optional[int]]
     auction_start_price: NotRequired[Optional[int]]
     auction_end_price: NotRequired[Optional[int]]

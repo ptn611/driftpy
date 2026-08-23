@@ -169,7 +169,7 @@ def decode_user(buffer: bytes) -> UserAccount:
         auction_start_price = read_bigint64le(buffer, offset + 48, True)
         auction_end_price = read_bigint64le(buffer, offset + 56, True)
         max_ts = read_bigint64le(buffer, offset + 64, True)
-        oracle_price_offset = read_int32_le(buffer, offset + 72, True)
+        order_offset = read_int32_le(buffer, offset + 72, True)
         order_id = read_int32_le(buffer, offset + 76, False)
         market_index = read_uint16_le(buffer, offset + 80)
         user_order_id = read_uint8(buffer, offset + 82)
@@ -189,7 +189,8 @@ def decode_user(buffer: bytes) -> UserAccount:
                 auction_start_price=auction_start_price,
                 auction_end_price=auction_end_price,
                 max_ts=max_ts,
-                oracle_price_offset=oracle_price_offset,
+                offset=order_offset,
+                offset_type=unpacked["offset_type"],
                 order_id=order_id,
                 market_index=market_index,
                 status=unpacked["status"],

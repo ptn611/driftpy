@@ -100,10 +100,9 @@ def decode_order_params(buffer: bytes) -> OrderParams:
     elif post_only_num == 3:
         post_only = PostOnlyParams.Slide()
 
-    # immediateOrCancel (bool)
-    immediate_or_cancel = (
-        int.from_bytes(debug_read(1, "immediate_or_cancel"), "little") == 1
-    )
+    # bitFlags (u8) — bit 0 = immediateOrCancel
+    bit_flags = int.from_bytes(debug_read(1, "bit_flags"), "little")
+    immediate_or_cancel = (bit_flags & 0b0000_0001) != 0
 
     # maxTs (option<i64>)
     max_ts_present = int.from_bytes(debug_read(1, "max_ts_present"), "little")
@@ -131,15 +130,19 @@ def decode_order_params(buffer: bytes) -> OrderParams:
     elif trigger_condition_num == 3:
         trigger_condition = OrderTriggerCondition.TriggeredBelow()
 
-    # oraclePriceOffset (option<i32>)
-    oracle_offset_present = int.from_bytes(
-        debug_read(1, "oracle_offset_present"), "little"
+    # offset (option<i32>)
+    order_offset_present = int.from_bytes(debug_read(1, "offset_present"), "little")
+    order_offset = None
+    if order_offset_present == 1:
+        order_offset = int.from_bytes(debug_read(4, "offset"), "little", signed=True)
+
+    # offsetType (option<u8>) — 0=Oracle, 1=Queue
+    offset_type_present = int.from_bytes(
+        debug_read(1, "offset_type_present"), "little"
     )
-    oracle_price_offset = None
-    if oracle_offset_present == 1:
-        oracle_price_offset = int.from_bytes(
-            debug_read(4, "oracle_price_offset"), "little", signed=True
-        )
+    order_offset_type = None
+    if offset_type_present == 1:
+        order_offset_type = int.from_bytes(debug_read(1, "offset_type"), "little")
 
     # auctionDuration (option<u8>)
     auction_duration_present = int.from_bytes(
@@ -177,11 +180,12 @@ def decode_order_params(buffer: bytes) -> OrderParams:
         market_index=market_index,
         reduce_only=reduce_only,
         post_only=post_only,
-        immediate_or_cancel=immediate_or_cancel,
+        bit_flags=bit_flags,
         max_ts=max_ts,
         trigger_price=trigger_price,
         trigger_condition=trigger_condition,
-        oracle_price_offset=oracle_price_offset,
+        offset=order_offset,
+        offset_type=order_offset_type,
         auction_duration=auction_duration,
         auction_start_price=auction_start_price,
         auction_end_price=auction_end_price,
@@ -347,8 +351,8 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     elif post_only_num == 3:
         post_only = PostOnlyParams.Slide()
 
-    # Read immediate_or_cancel (bool)
-    immediate_or_cancel = int.from_bytes(buffer[offset : offset + 1], "little") == 1
+    # bitFlags (u8) — bit 0 = immediateOrCancel
+    bit_flags = int.from_bytes(buffer[offset : offset + 1], "little")
     offset += 1
 
     # Read max_ts (option<i64>)
@@ -382,16 +386,25 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     elif trigger_condition_num == 3:
         trigger_condition = OrderTriggerCondition.TriggeredBelow()
 
-    # Read oracle_price_offset (option<i32>)
-    oracle_offset_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    # Read offset (option<i32>)
+    order_offset_present = int.from_bytes(buffer[offset : offset + 1], "little")
     offset += 1
 
-    oracle_price_offset = None
-    if oracle_offset_present == 1:
-        oracle_price_offset = int.from_bytes(
+    order_offset = None
+    if order_offset_present == 1:
+        order_offset = int.from_bytes(
             buffer[offset : offset + 4], "little", signed=True
         )
         offset += 4
+
+    # Read offset_type (option<u8>) — 0=Oracle, 1=Queue
+    offset_type_present = int.from_bytes(buffer[offset : offset + 1], "little")
+    offset += 1
+
+    order_offset_type = None
+    if offset_type_present == 1:
+        order_offset_type = int.from_bytes(buffer[offset : offset + 1], "little")
+        offset += 1
 
     # Read auction_duration (option<u8>)
     auction_duration_present = int.from_bytes(buffer[offset : offset + 1], "little")
@@ -434,11 +447,12 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         market_index=market_index,
         reduce_only=reduce_only,
         post_only=post_only,
-        immediate_or_cancel=immediate_or_cancel,
+        bit_flags=bit_flags,
         max_ts=max_ts,
         trigger_price=trigger_price,
         trigger_condition=trigger_condition,
-        oracle_price_offset=oracle_price_offset,
+        offset=order_offset,
+        offset_type=order_offset_type,
         auction_duration=auction_duration,
         auction_start_price=auction_start_price,
         auction_end_price=auction_end_price,

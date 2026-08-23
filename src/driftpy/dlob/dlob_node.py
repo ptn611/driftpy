@@ -102,7 +102,7 @@ class FloatingLimitOrderNode(OrderNode):
         self.previous = None
 
     def get_sort_value(self, order: Order) -> int:
-        return order.oracle_price_offset
+        return order.offset
 
 
 class MarketOrderNode(OrderNode):
