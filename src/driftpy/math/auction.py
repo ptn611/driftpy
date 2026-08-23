@@ -38,6 +38,14 @@ def get_auction_price(order: Order, slot: int, oracle_price: int) -> int:
     raise ValueError(f"Can't get auction price for order type {order.order_type}")
 
 
+def _trunc_div(a: int, b: int) -> int:
+    # Truncate toward zero like Rust/contract integer division
+    # (Python ``//`` floors, which diverges for negative products).
+    if b < 0:
+        a, b = -a, -b
+    return -(a // b) if a < 0 else a // b
+
+
 def get_auction_price_for_fixed_auction(order: Order, slot: int) -> int:
     slots_elapsed = max(0, slot - order.slot)
 
@@ -50,12 +58,12 @@ def get_auction_price_for_fixed_auction(order: Order, slot: int) -> int:
     if is_variant(order.direction, "Long"):
         price_delta = (
             (order.auction_end_price - order.auction_start_price)
-            * delta_numerator // delta_denominator
+            * _trunc_div(delta_numerator, delta_denominator)
         )
     else:
         price_delta = (
             (order.auction_start_price - order.auction_end_price)
-            * delta_numerator // delta_denominator
+            * _trunc_div(delta_numerator, delta_denominator)
         )
 
     if is_variant(order.direction, "Long"):
@@ -80,12 +88,12 @@ def get_auction_price_for_oracle_offset_auction(
     if is_variant(order.direction, "Long"):
         price_offset_delta = (
             (order.auction_end_price - order.auction_start_price)
-            * delta_numerator // delta_denominator
+            * _trunc_div(delta_numerator, delta_denominator)
         )
     else:
         price_offset_delta = (
             (order.auction_start_price - order.auction_end_price)
-            * delta_numerator // delta_denominator
+            * _trunc_div(delta_numerator, delta_denominator)
         )
 
     if is_variant(order.direction, "Long"):
