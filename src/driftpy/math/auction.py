@@ -41,9 +41,8 @@ def get_auction_price(order: Order, slot: int, oracle_price: int) -> int:
 def _trunc_div(a: int, b: int) -> int:
     # Truncate toward zero like Rust/contract integer division
     # (Python ``//`` floors, which diverges for negative products).
-    if b < 0:
-        a, b = -a, -b
-    return -(a // b) if a < 0 else a // b
+    q = abs(a) // abs(b)
+    return -q if (a < 0) != (b < 0) else q
 
 
 def get_auction_price_for_fixed_auction(order: Order, slot: int) -> int:
