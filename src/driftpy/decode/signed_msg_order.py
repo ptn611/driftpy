@@ -72,6 +72,8 @@ def decode_order_params(buffer: bytes) -> OrderParams:
         raise ValueError(f"Invalid order type: {order_type_num}")
 
     market_type_num = int.from_bytes(debug_read(1, "market_type"), "little")
+    if market_type_num not in (0, 1):
+        raise ValueError(f"Invalid market type: {market_type_num}")
     market_type: MarketType = (
         MarketType.Spot() if market_type_num == 0 else MarketType.Perp()
     )
@@ -79,6 +81,10 @@ def decode_order_params(buffer: bytes) -> OrderParams:
     existing_position_direction_num = int.from_bytes(
         debug_read(1, "direction"), "little"
     )
+    if existing_position_direction_num not in (0, 1):
+        raise ValueError(
+            f"Invalid position direction: {existing_position_direction_num}"
+        )
     direction: PositionDirection = (
         PositionDirection.Long()
         if existing_position_direction_num == 0
@@ -108,6 +114,8 @@ def decode_order_params(buffer: bytes) -> OrderParams:
         post_only = PostOnlyParams.TryPostOnly()
     elif post_only_num == 3:
         post_only = PostOnlyParams.Slide()
+    else:
+        raise ValueError(f"Invalid post-only param: {post_only_num}")
 
     # bitFlags (u8) — bit 0 = immediateOrCancel
     bit_flags = int.from_bytes(debug_read(1, "bit_flags"), "little")
@@ -141,6 +149,8 @@ def decode_order_params(buffer: bytes) -> OrderParams:
         trigger_condition = OrderTriggerCondition.TriggeredAbove()
     elif trigger_condition_num == 3:
         trigger_condition = OrderTriggerCondition.TriggeredBelow()
+    else:
+        raise ValueError(f"Invalid trigger condition: {trigger_condition_num}")
 
     # offset (option<i32>)
     order_offset_present = _validate_option_tag(
@@ -329,11 +339,17 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     # Read market_type (u8)
     market_type_num = int.from_bytes(buffer[offset : offset + 1], "little")
     offset += 1
-    market_type = MarketType.Spot() if market_type_num == 0 else MarketType.Perp()
+    if market_type_num not in (0, 1):
+        raise ValueError(f"Invalid market type: {market_type_num}")
+    market_type = (
+        MarketType.Spot() if market_type_num == 0 else MarketType.Perp()
+    )
 
     # Read direction (u8)
     direction_num = int.from_bytes(buffer[offset : offset + 1], "little")
     offset += 1
+    if direction_num not in (0, 1):
+        raise ValueError(f"Invalid position direction: {direction_num}")
     direction = (
         PositionDirection.Long() if direction_num == 0 else PositionDirection.Short()
     )
@@ -370,6 +386,8 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         post_only = PostOnlyParams.TryPostOnly()
     elif post_only_num == 3:
         post_only = PostOnlyParams.Slide()
+    else:
+        raise ValueError(f"Invalid post-only param: {post_only_num}")
 
     # bitFlags (u8) — bit 0 = immediateOrCancel
     bit_flags = int.from_bytes(buffer[offset : offset + 1], "little")
@@ -409,6 +427,8 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         trigger_condition = OrderTriggerCondition.TriggeredAbove()
     elif trigger_condition_num == 3:
         trigger_condition = OrderTriggerCondition.TriggeredBelow()
+    else:
+        raise ValueError(f"Invalid trigger condition: {trigger_condition_num}")
 
     # Read offset (option<i32>)
     order_offset_present = _validate_option_tag(
