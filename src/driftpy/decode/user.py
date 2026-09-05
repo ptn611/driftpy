@@ -44,6 +44,8 @@ def read_bigint64le(buffer, offset: Literal, signed: bool):
 
 
 def decode_user(buffer: bytes) -> UserAccount:
+    if len(buffer) < 4104:
+        raise ValueError(f"user buffer too short: {len(buffer)} < 4104")
     offset = 8
     authority = Pubkey(buffer[offset : offset + 32])
     offset += 32
@@ -254,9 +256,6 @@ def decode_user(buffer: bytes) -> UserAccount:
     status = read_uint8(buffer, offset)
     offset += 1
 
-    is_margin_trading_enabled = read_uint8(buffer, offset) == 1
-    offset += 1
-
     idle = read_uint8(buffer, offset) == 1
     offset += 1
 
@@ -272,8 +271,18 @@ def decode_user(buffer: bytes) -> UserAccount:
     has_open_auction = read_uint8(buffer, offset) == 1
     offset += 1
 
+    pool_id = read_uint8(buffer, offset)
+    offset += 1
+
+    # Packed User.flags (PACKING_PLAN §3): bit 0 = margin_trading_enabled,
+    # bits 1-2 = margin_mode.
+    flags = read_uint8(buffer, offset)
+    offset += 1
+
+    is_margin_trading_enabled = (flags & 0b0000_0001) != 0
+
     margin_mode: MarginMode
-    margin_mode_num = read_uint8(buffer, offset)
+    margin_mode_num = (flags & 0b0000_0110) >> 1
     if margin_mode_num == 0:
         margin_mode = MarginMode.Default()
     elif margin_mode_num == 1:
@@ -285,21 +294,11 @@ def decode_user(buffer: bytes) -> UserAccount:
             f"Warning: unknown margin mode: {margin_mode_num}, (user: {authority}) returning default"
         )
         margin_mode = MarginMode.Default()
-    offset += 1
-
-    pool_id = read_uint8(buffer, offset)
-    offset += 1
-
-    padding1_bytes = [buffer[offset + i] for i in range(3)]
-    offset += 3
 
     last_fuel_bonus_update_ts = read_int32_le(buffer, offset, signed=False)
     offset += 4
 
-    final_padding_bytes = [buffer[offset + i] for i in range(12)]
-    offset += 12
-
-    user_account_padding = padding1_bytes + final_padding_bytes
+    user_account_padding = []
 
     return UserAccount(
         authority,
