@@ -49,6 +49,18 @@ def test_negative_stored_flags_order_type_invalid():
     assert u.orders == []
 
 
+def test_negative_stored_flags_margin_mode_reserved():
+    v = golden()["user_account"][0]
+    buf = bytearray(bytes.fromhex(v["hex"]))
+    flags_off = 8 + 4091  # User.flags[0] — offset_of(User,flags)=4091 (PACKING_PLAN §3.1)
+    # set margin_mode bits (bits1-2) to 0b11 = discriminant 3 → on-chain
+    # MarginMode::try_from returns Err → off-chain decode must raise, not
+    # silently fall back to Default.
+    buf[flags_off] = (buf[flags_off] & ~0b0000_0110) | (3 << 1)
+    with pytest.raises(ValueError, match="margin_mode discriminant"):
+        decode_user(bytes(buf))
+
+
 def test_negative_short_buffer_fail_closed():
     good = bytes.fromhex(golden()["user_account"][0]["hex"])
     for cut in (100, 4000, 4103):

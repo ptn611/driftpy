@@ -290,10 +290,11 @@ def decode_user(buffer: bytes) -> UserAccount:
     elif margin_mode_num == 2:
         margin_mode = MarginMode.HighLeverageMaintenance()
     else:
-        print(
-            f"Warning: unknown margin mode: {margin_mode_num}, (user: {authority}) returning default"
+        raise ValueError(
+            f"unknown margin_mode discriminant {margin_mode_num} "
+            f"(User.flags=0x{flags:02x}); on-chain MarginMode::try_from "
+            f"rejects this value — account data corrupted"
         )
-        margin_mode = MarginMode.Default()
 
     last_fuel_bonus_update_ts = read_int32_le(buffer, offset, signed=False)
     offset += 4
