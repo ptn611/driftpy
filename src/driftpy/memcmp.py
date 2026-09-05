@@ -12,25 +12,27 @@ def get_user_filter() -> MemcmpOpts:
 
 # Tail-field offsets mirror the packed User layout in protocol-v2
 # programs/drift/src/state/user.rs — orders[32] end at 4008, then the
-# post-orders tail: idle @4094, has_open_order @4096, has_open_auction
-# @4098, margin_mode @4099, pool_id @4100. Keep in sync with
-# sdk/src/memcmp.ts and drift-rs crates/src/memcmp.rs.
+# post-orders tail (packed): idle @4093, has_open_order @4095,
+# open_auctions @4096, has_open_auction @4097, pool_id @4098.
+# Offsets are absolute account bytes (struct offset + 8-byte discriminator).
+# Keep in sync with sdk/src/memcmp.ts, drift-rs crates/src/memcmp.rs and
+# PACKING_PLAN §3.2 (2b16c79/8db3de8).
 
 
 def get_non_idle_user_filter() -> MemcmpOpts:
-    return MemcmpOpts(4094, base58.b58encode(bytes([0])).decode())
+    return MemcmpOpts(4093, base58.b58encode(bytes([0])).decode())
 
 
 def get_user_with_auction_filter() -> MemcmpOpts:
-    return MemcmpOpts(4098, base58.b58encode(bytes([1])).decode())
+    return MemcmpOpts(4097, base58.b58encode(bytes([1])).decode())
 
 
 def get_user_with_order_filter() -> MemcmpOpts:
-    return MemcmpOpts(4096, base58.b58encode(bytes([1])).decode())
+    return MemcmpOpts(4095, base58.b58encode(bytes([1])).decode())
 
 
 def get_user_without_order_filter() -> MemcmpOpts:
-    return MemcmpOpts(4096, base58.b58encode(bytes([0])).decode())
+    return MemcmpOpts(4095, base58.b58encode(bytes([0])).decode())
 
 
 def get_user_that_has_been_lp_filter() -> MemcmpOpts:
@@ -44,7 +46,7 @@ def get_user_with_name_filter(name: str) -> MemcmpOpts:
 
 
 def get_users_with_pool_id_filter(pool_id: int) -> MemcmpOpts:
-    return MemcmpOpts(4100, base58.b58encode(bytes([pool_id])).decode())
+    return MemcmpOpts(4098, base58.b58encode(bytes([pool_id])).decode())
 
 
 def get_market_type_filter(market_type: MarketType) -> MemcmpOpts:

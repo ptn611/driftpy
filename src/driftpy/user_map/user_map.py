@@ -138,7 +138,8 @@ class UserMap(UserMapInterface, DLOBSource):
             try:
                 filters = [{"memcmp": {"offset": 0, "bytes": "TfwwBiNJtao"}}]
                 if not self.include_idle:
-                    filters.append({"memcmp": {"offset": 4094, "bytes": "1"}})
+                    # bytes "1" = base58 of [0x00] (idle == 0)
+                    filters.append({"memcmp": {"offset": 4093, "bytes": "1"}})
 
                 rpc_request = jsonrpcclient.request(
                     "getProgramAccounts",
