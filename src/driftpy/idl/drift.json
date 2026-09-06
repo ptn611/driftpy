@@ -11682,19 +11682,12 @@
       "type": "u8"
      },
      {
-      "name": "isMarginTradingEnabled",
-      "docs": [
-       "Whether the user has enabled margin trading"
-      ],
-      "type": "bool"
-     },
-     {
       "name": "idle",
       "docs": [
        "User is idle if they haven't interacted with the protocol in 1 week and they have no orders, perp positions or borrows",
        "Off-chain keeper bots can ignore users that are idle"
       ],
-      "type": "bool"
+      "type": "u8"
      },
      {
       "name": "openOrders",
@@ -11708,7 +11701,7 @@
       "docs": [
        "Whether or not user has open order"
       ],
-      "type": "bool"
+      "type": "u8"
      },
      {
       "name": "openAuctions",
@@ -11722,39 +11715,28 @@
       "docs": [
        "Whether or not user has open order with auction"
       ],
-      "type": "bool"
-     },
-     {
-      "name": "marginMode",
-      "type": {
-       "defined": "MarginMode"
-      }
+      "type": "u8"
      },
      {
       "name": "poolId",
       "type": "u8"
      },
      {
-      "name": "padding1",
+      "name": "flags",
+      "docs": [
+       "Packed small fields (PACKING_PLAN §3):",
+       "byte 0: margin_trading_enabled | margin_mode | reserved"
+      ],
       "type": {
        "array": [
         "u8",
-        3
+        1
        ]
       }
      },
      {
       "name": "lastFuelBonusUpdateTs",
       "type": "u32"
-     },
-     {
-      "name": "padding",
-      "type": {
-       "array": [
-        "u8",
-        12
-       ]
-      }
      }
     ]
    }
