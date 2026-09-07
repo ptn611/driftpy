@@ -479,6 +479,7 @@ class OrderParamsBitFlag:
 
     IMMEDIATE_OR_CANCEL = 1 << 0
     UPDATE_HIGH_LEVERAGE_MODE = 1 << 1
+    ABSORB_TRIGGERED_ONLY = 1 << 2
 
     @staticmethod
     def is_immediate_or_cancel(bit_flags: int) -> bool:
@@ -489,6 +490,11 @@ class OrderParamsBitFlag:
     def is_update_high_leverage_mode(bit_flags: int) -> bool:
         """Check if UPDATE_HIGH_LEVERAGE_MODE flag is set"""
         return (bit_flags & OrderParamsBitFlag.UPDATE_HIGH_LEVERAGE_MODE) != 0
+
+    @staticmethod
+    def is_absorb_triggered_only(bit_flags: int) -> bool:
+        """Check if ABSORB_TRIGGERED_ONLY flag is set"""
+        return (bit_flags & OrderParamsBitFlag.ABSORB_TRIGGERED_ONLY) != 0
 
 
 @dataclass
