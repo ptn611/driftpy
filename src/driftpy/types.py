@@ -1567,6 +1567,10 @@ class OrderBitFlag:
     SignedMessage = 1
     OracleTriggerMarket = 2
     SafeTriggerOrder = 4
+    NewTriggerReduceOnly = 8
+    HasBuilder = 16
+    IsIsolatedPosition = 32
+    AbsorbTriggeredOnly = 64
 
 
 @dataclass

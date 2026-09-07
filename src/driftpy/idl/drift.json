@@ -15725,6 +15725,9 @@
      },
      {
       "name": "UpdateHighLeverageMode"
+     },
+     {
+      "name": "AbsorbTriggeredOnly"
      }
     ]
    }
@@ -16313,6 +16316,9 @@
      },
      {
       "name": "IsIsolatedPosition"
+     },
+     {
+      "name": "AbsorbTriggeredOnly"
      }
     ]
    }
