@@ -10,6 +10,7 @@ from driftpy.types import (
     SignedMsgOrderParamsDelegateMessage,
     SignedMsgOrderParamsMessage,
     SignedMsgTriggerOrderParams,
+    TriggerPriceType,
 )
 
 
@@ -206,6 +207,22 @@ def decode_order_params(buffer: bytes) -> OrderParams:
             debug_read(8, "auction_end_price"), "little", signed=True
         )
 
+    # triggerPriceType (option<u8>, appended last) — 0=Oracle, 1=Last, None=Oracle
+    trigger_price_type_present = _validate_option_tag(
+        int.from_bytes(debug_read(1, "trigger_price_type_present"), "little"),
+        "trigger_price_type",
+    )
+    trigger_price_type = None
+    if trigger_price_type_present == 1:
+        trigger_price_type_num = int.from_bytes(
+            debug_read(1, "trigger_price_type"), "little"
+        )
+        if trigger_price_type_num not in (0, 1):
+            raise ValueError(
+                f"Invalid trigger_price_type: {trigger_price_type_num}"
+            )
+        trigger_price_type = TriggerPriceType(trigger_price_type_num)
+
     return OrderParams(
         order_type=order_type,
         market_type=market_type,
@@ -225,6 +242,7 @@ def decode_order_params(buffer: bytes) -> OrderParams:
         auction_duration=auction_duration,
         auction_start_price=auction_start_price,
         auction_end_price=auction_end_price,
+        trigger_price_type=trigger_price_type,
     )
 
 
@@ -584,6 +602,17 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
     if auction_end_present == 1:
         auction_end_price = int.from_bytes(read(8, "auction_end_price"), "little", signed=True)
 
+    # Read trigger_price_type (option<u8>, appended last) — 0=Oracle, 1=Last
+    trigger_price_type_present = _validate_option_tag(
+        int.from_bytes(read(1, "field"), "little"), "trigger_price_type"
+    )
+    trigger_price_type = None
+    if trigger_price_type_present == 1:
+        trigger_price_type_num = int.from_bytes(read(1, "trigger_price_type"), "little")
+        if trigger_price_type_num not in (0, 1):
+            raise ValueError(f"Invalid trigger_price_type: {trigger_price_type_num}")
+        trigger_price_type = TriggerPriceType(trigger_price_type_num)
+
     return OrderParams(
         order_type=order_type,
         market_type=market_type,
@@ -603,4 +632,5 @@ def decode_order_params_with_size(buffer: bytes) -> tuple[OrderParams, int]:
         auction_duration=auction_duration,
         auction_start_price=auction_start_price,
         auction_end_price=auction_end_price,
+        trigger_price_type=trigger_price_type,
     ), offset

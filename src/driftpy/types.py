@@ -417,6 +417,17 @@ class OrderTriggerCondition:
     TriggeredBelow = constructor()
 
 
+class TriggerPriceType(py_enum.IntEnum):
+    """Mirror of Rust TriggerPriceType / TS TriggerPriceType (Order.flags[1] bit 6).
+
+    IntEnum (not sumtypes) so raw ints keep comparing equal: existing
+    `== 0` / `== 1` checks and bit-packing code work unchanged.
+    """
+
+    Oracle = 0
+    Last = 1
+
+
 @_rust_enum
 class MarketType:
     Spot = constructor()
@@ -462,6 +473,8 @@ class OrderParams:
     auction_duration: Optional[int] = None
     auction_start_price: Optional[int] = None
     auction_end_price: Optional[int] = None
+    # trigger price type: 0=Oracle (default), 1=Last (perp/spot base)
+    trigger_price_type: Optional[TriggerPriceType] = None
 
     def set_spot(self):
         self.market_type = MarketType.Spot()
@@ -515,6 +528,8 @@ class ModifyOrderParams:
     auction_start_price: Optional[int] = None
     auction_end_price: Optional[int] = None
     policy: Optional[ModifyOrderPolicy] = None
+    # trigger price type: 0=Oracle, 1=Last; None=carry existing bit
+    trigger_price_type: Optional[TriggerPriceType] = None
 
 
 @dataclass
@@ -714,6 +729,8 @@ class Order:
     posted_slot_tail: int
     bit_flags: int
     padding: list[int] = field(default_factory=lambda: [0] * 1)
+    # 0=Oracle, 1=Last (packed flags[1] bit 6); default Oracle keeps old decodes working
+    trigger_price_type: TriggerPriceType = TriggerPriceType.Oracle
 
 
 @dataclass
@@ -885,6 +902,10 @@ class SpotMarketAccount:
     fuel_boost_taker: Optional[int] = None
     fuel_boost_maker: Optional[int] = None
     fuel_boost_insurance: Optional[int] = None
+    token_program_flag: int = 0
+    pool_id: int = 0
+    # last fill price — trigger source for Last orders (PRICE_PRECISION, 0 = no fills)
+    last_fill_price: int = 0
     padding: list[int] = field(default_factory=lambda: [0] * 42)
 
 

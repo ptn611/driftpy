@@ -211,6 +211,7 @@ def decode_user(buffer: bytes) -> UserAccount:
                 bit_flags=bit_flags,
                 posted_slot_tail=posted_slot_tail,
                 padding=[0],
+                trigger_price_type=unpacked["trigger_price_type"],
             )
         )
 

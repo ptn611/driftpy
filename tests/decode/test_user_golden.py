@@ -31,7 +31,8 @@ def test_decode_user_offline_matches_fixture(idx):
     assert u.last_add_perp_lp_shares_ts == v["lp_ts"]
     off = v.get("reserved_bits_flags_offset")
     if off is not None:
-        assert (buf[off] & 0xC0) == 0xC0
+        assert (buf[off] & 0x80) == 0x80  # bit 7 reserved; b6 là trigger_price_type (=0 Oracle ở đây)
+        assert (buf[off] & 0x40) == 0
 
 
 def test_negative_stored_flags_order_type_invalid():

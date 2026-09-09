@@ -8,6 +8,7 @@ from driftpy.types import (
     OrderTriggerCondition,
     OrderType,
     PositionDirection,
+    TriggerPriceType,
 )
 
 # Mirrors TS ORDER_FLAGS_LAYOUT
@@ -22,6 +23,7 @@ ORDER_FLAGS_LAYOUT = {
     "IMMEDIATE_OR_CANCEL": {"byte": 1, "shift": 2, "mask": 0b0000_0100},
     "OFFSET_TYPE": {"byte": 1, "shift": 3, "mask": 0b0000_1000},
     "TRIGGER_CONDITION": {"byte": 1, "shift": 4, "mask": 0b0011_0000},
+    "TRIGGER_PRICE_TYPE": {"byte": 1, "shift": 6, "mask": 0b0100_0000},
     "BIT_FLAGS_BYTE": 2,
 }
 
@@ -90,5 +92,10 @@ def unpack_order_flags(flags):
         ],
         # offset_type: 0=Oracle, 1=Queue — keep as int for now (driftpy has no OffsetType)
         "offset_type": _get_bits(flags, ORDER_FLAGS_LAYOUT["OFFSET_TYPE"]),
+        # trigger_price_type: Oracle=0, Last=1 (IntEnum == int, fail-closed:
+        # the 1-bit mask only ever yields 0/1)
+        "trigger_price_type": TriggerPriceType(
+            _get_bits(flags, ORDER_FLAGS_LAYOUT["TRIGGER_PRICE_TYPE"])
+        ),
         "bit_flags": flags[ORDER_FLAGS_LAYOUT["BIT_FLAGS_BYTE"]],
     }

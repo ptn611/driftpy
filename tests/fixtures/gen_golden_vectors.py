@@ -60,6 +60,7 @@ def pack_order_params(p):
     out += opt_bytes(p.get("auction_duration"), 1)
     out += opt_bytes(p.get("auction_start_price"), 8, signed=True)
     out += opt_bytes(p.get("auction_end_price"), 8, signed=True)
+    out += opt_bytes(p.get("trigger_price_type"), 1)
     return out
 
 def pack_std_tail(p):
@@ -271,7 +272,7 @@ def pack_flags_byte0(status, order_type, market_type, direction, existing_dir):
     b |= (existing_dir & 1) << 7
     return b
 
-def pack_flags_byte1(reduce_only, post_only_bool, ioc, offset_type_oracle, trigger_condition, reserved=0):
+def pack_flags_byte1(reduce_only, post_only_bool, ioc, offset_type_oracle, trigger_condition, reserved=0, trigger_price_type=0):
     # V-FIX cross-check r169: contract quy ước offset_type discriminant (Oracle=0, Queue=1)
     # -> bit SET tương ứng Queue, bit CLEAR là Oracle (contract là trọng tài)
     b = (1 if reduce_only else 0)
@@ -279,13 +280,15 @@ def pack_flags_byte1(reduce_only, post_only_bool, ioc, offset_type_oracle, trigg
     b |= (1 if ioc else 0) << 2
     b |= (0 if offset_type_oracle else 1) << 3
     b |= (trigger_condition & 0b11) << 4
-    b |= reserved & 0b1100_0000
+    b |= (trigger_price_type & 0b1) << 6  # TriggerPriceType: 0=Oracle, 1=Last
+    b |= reserved & 0b1000_0000  # bit 7 reserved (b6 là trigger_price_type)
     return b
 
 def pack_order(o):
     f0 = pack_flags_byte0(o.get("status", 1), o["order_type"], o["market_type"], o["direction"], o.get("existing_position_direction", 0))
     f1 = pack_flags_byte1(o.get("reduce_only", False), o.get("post_only", False), o.get("ioc", False),
-                          o.get("offset_type_oracle", False), o.get("trigger_condition", 0), o.get("flags1_reserved", 0))
+                           o.get("offset_type_oracle", False), o.get("trigger_condition", 0), o.get("flags1_reserved", 0),
+                           o.get("trigger_price_type", 0))
     f2 = o.get("legacy_bit_flags", 0)
     buf = b""
     buf += struct.pack("<Q", o["slot"])
@@ -377,13 +380,13 @@ order_flags_python.append(of_vec("of_offset_queue_nonzero", dict(
 order_flags_python.append(of_vec("of_status_variants", dict(
     slot=1012, price=50_000_000_000, base_asset_amount=10**18, offset=0, order_id=oid(),
     market_index=0, order_type=1, market_type=1, direction=0, status=3, existing_position_direction=1)))
-# 14. RESERVED-BITS flags[1]|=0xC0 (mutate sau pack — setter không tạo được)
+# 14. RESERVED-BIT flags[1]|=0x80 (mutate sau pack — setter không tạo được; b6 là trigger_price_type)
 _rv = dict(slot=1013, price=50_000_000_000, base_asset_amount=10**18, offset=1000, order_id=oid(),
            market_index=0, order_type=1, market_type=1, direction=0, offset_type_oracle=True,
-           flags1_reserved=0xC0)
+           flags1_reserved=0x80)
 _rb = pack_order(_rv)
-assert (_rb[86] & 0xC0) == 0xC0
-_v = {"name": "of_reserved_bits_c0", "hex": h(_rb), "flags": [_rb[85], _rb[86], _rb[87]], **_rv}
+assert (_rb[86] & 0x80) == 0x80 and (_rb[86] & 0x40) == 0
+_v = {"name": "of_reserved_bits_80", "hex": h(_rb), "flags": [_rb[85], _rb[86], _rb[87]], **_rv}
 _v["reserved_bits_flags_offset"] = FLAGS_OFFSET + 1  # 86 — offset TRONG vector
 _v["expect_reserved_preserved"] = 1
 order_flags_python.append(_v)
@@ -397,6 +400,18 @@ order_flags_python.append(of_vec("of_legacy_bits_clear", dict(
     slot=1015, price=50_000_000_000, base_asset_amount=10**18, offset=1000, order_id=oid(),
     market_index=0, order_type=1, market_type=1, direction=0, offset_type_oracle=True,
     legacy_bit_flags=0x00), expect_legacy_mask_set=0))
+# 17. trigger_price_type Last (flags[1] b6 = 1) — reverse tripwire cho #14 (append CUỐI để oid khớp contract)
+order_flags_python.append(of_vec("of_last_trigger_bit", dict(
+    slot=1016, price=50_000_000_000, base_asset_amount=10**18, trigger_price=60_000_000_000,
+    offset=1000, order_id=oid(), market_index=0, order_type=2, market_type=1, direction=0,
+    offset_type_oracle=True, trigger_condition=0, trigger_price_type=1),
+    expect_trigger_price_type=1))
+# 18. spot trigger_price_type Last (mirror #17 trên base spot market)
+order_flags_python.append(of_vec("of_spot_last_trigger_bit", dict(
+    slot=1017, price=50_000_000_000, base_asset_amount=10**18, trigger_price=60_000_000_000,
+    offset=1000, order_id=oid(), market_index=1, order_type=2, market_type=0, direction=0,
+    offset_type_oracle=True, trigger_condition=0, trigger_price_type=1),
+    expect_trigger_price_type=1))
 
 # ---------------- auction_vectors / router_vectors ----------------
 # expected_* là pins từ contract emitter (d2) — KHÔNG để None: test
